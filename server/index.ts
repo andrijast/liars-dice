@@ -187,7 +187,7 @@ async function gameFlow(num: number) {
         nextToMove: 0,
     }
 
-    let rnd = 0;
+    // let rnd = 0;
     while (state.playersLeft > 1) {
         // console.log('before round', ++rnd, state);
         await roundFlow(state); // be wary, it can change there

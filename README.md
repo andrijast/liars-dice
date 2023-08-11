@@ -1,7 +1,7 @@
 
 # Liar's Dice Game
 
-[Liar's Dice](/Rules.md) simulator and API for building AI's (bots) to compete among themselves.
+[Liar's Dice](/Game%20rules.md) simulator and API for building AI's (bots) to compete among themselves.
 
 
 ## Creating a bot
