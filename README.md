@@ -1,30 +1,31 @@
 
 # Liar's Dice Game
 
-[Liar's Dice](/Game%20rules.md) simulator and API for building AI's (bots) to compete among themselves.
+[Liar's Dice](/Game%20rules.md) game simulator and API for building AI's (bots) to compete among themselves.
 
 
 ## Creating a bot
 
-To create your bot, follow the [API spec](/Bot%20API%20spec.md) or check some preset bots in `/bots` directory.
+To create your player bot, follow the [API spec](/Bot%20API%20spec.md) or check some preset bots in `/bots` directory.
 
 
 ## Running a simulation
 
-First, make sure you have `git` and `deno` installed. Then you can clone this repo to get started:
+First, make sure you have `git` and `deno` installed. Then you can clone this repo to get started
 
 ```bash
 git clone git@github.com:andrijast/liars-dice
 cd liars-dice
 ```
 
-Now use this command with this options to start the server
+Now use this command to start the server
 
 ```bash
 deno run --allow-net ./server/index.ts [number_of_players=2] [number_of_dice=6] [number_of_games=1] [port=5533]
 ```
 
 Or just use `run.sh` script
+
 ```bash
 ./run.sh [number_of_players=2] [number_of_dice=6] [number_of_games=1] [port=5533]
 ```
