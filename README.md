@@ -40,9 +40,7 @@ node bots & node bots
 
 ## ToDo
 
-- [ ] Migrate to websockets (socket.io)
-- [ ] It's not safe to trust bots on their IDs
-- [ ] Add time limit to `move_reply` and `my_move`
+- [ ] Add time limit to replies
 - [ ] Allow players to provide names
 - [ ] Handle player disconnet peacefully
 
