@@ -6,7 +6,7 @@
 
 ## Creating a bot
 
-To create your player bot, follow the [API spec](/Bot%20API%20spec.md) or check some preset bots in `/bots` directory.
+To create your player bot, follow the [API spec](/API.md) or check some preset bots in `/bots` directory.
 
 
 ## Running a simulation
