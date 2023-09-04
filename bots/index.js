@@ -26,20 +26,26 @@ function answer(msg) {
     
     const ret = {
         message_id: msg.message_id,
-        name: "Joca",
-        challenge: false,
-        move: msg.currentBid,
+        move: 'pass',
     };
 
     if (Math.random() < 0.2) {
-        ret.challenge = true;
+        ret.move = 'challenge';
         return ret;
     }
 
-    if (msg.is_your_turn) {
-        ret.move.count++;
+    if (msg.other_hands[0][0] === 0) {
+        ret.move = msg.last_bid;
+        if (ret.move[0] === 0) ret.move[0]++;
+        ret.move[1]++;
         return ret;
     }
 
+    return ret;
+
+}
+
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 

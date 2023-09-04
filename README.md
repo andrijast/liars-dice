@@ -40,8 +40,6 @@ node bots & node bots
 
 ## ToDo
 
-- [ ] Add time limit to replies
+- [x] Add time limit to replies
 - [ ] Allow players to provide names
 - [ ] Handle player disconnet peacefully
-
-Feel free to use `Issues` and `Pull requests` to contribute.
