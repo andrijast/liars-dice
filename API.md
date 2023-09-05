@@ -1,5 +1,5 @@
 
-Communication between server and an AI bot is done via **TCP/IP sockets** with messages in **JSON** format. Therefore, you can write your bot in any language that supports these two.
+Communication between server and an AI bot is done via **TCP/IP sockets** with messages in **JSON** format. Therefore, write your bot in any language where you feel the most comfortable with these two.
 
 Message passing is done in a request-response manner, meaning, after server sends a message, bot should reply *synchronously* with the same `message_id` field. This is the *only* means of communication.
 
@@ -34,7 +34,7 @@ interface move_request {
     move_number: Ordinal;
     your_hand: Face[];
     other_hands: [PlayerID | Yourself, Count][]; // sorted by playing order
-    last_bid: Bid | EmptyBid; // empty means first move in a round
+    last_bid: Bid | EmptyBid; // empty means first move in the round
 }
 ```
 
@@ -76,15 +76,15 @@ interface set_name {
 The API should be pretty clear from the information above, or at least straightforward enough to be able to deduce other details. However, if you still have some confusion, here are some key takeaways to keep in mind:
 
 - Field `other_hands` is an array of pairs of numbers where first one contains the ID of a player and second how many dice that player has left. It is sorted by the playing order. Field `state` is very similar, except it contains all players (even the ones with 0 dice left), and is not necessarily sorted in any way.
-- Here's how can you derive other information from the data given in `move_request` message:
-    - It's first move in the round if: `last_bid == EmptyBid`.
-    - Previous bid was made by the player whose ID is in the last element of `other_hands` array (obviously if it's not the first move).
-    - Next player to make a move is the one whose ID is in the first element of `other_hands` array.
-    - It's your turn if that ID is `0` aka. `Yourself`.
+- Here's how you can derive other information from the data given in `move_request` message:
+    - It's the first move in the round if: `last_bid == EmptyBid`
+    - Previous bid was made by the player whose ID is in the last element of `other_hands` array (obviously if it's not the first move)
+    - Next player to make a move is the one whose ID is in the first element of `other_hands` array
+    - It's your turn if that ID is `0` aka. `Yourself`
 - Your move will be considered invalid and you'll lose the round if:
     - You don't respect specified message format
     - You don't answer nothing within 3 seconds
-    - You answer with `pass` on your turn
-- Once you lose, you will only receive `round_over` messages for the rest of the game (not match!).
+    - You answer with "pass" on your turn
+- Once you lose, you will only receive `round_over` messages for the rest of that game.
 - Round-robin principle is on duty. If multiple players do the same action (invalid move, challenge), action by the next player in playing order will be acknowledged.
 - Name can be set only once (subsequent `set_name` messages will not be taken into account), and is suggested to be set as soon as possible.
