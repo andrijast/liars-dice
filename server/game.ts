@@ -123,16 +123,17 @@ export default class Game {
                 this.turn.splice(this.turn.indexOf(loser_index), 1);
             }
 
-            const msg: round_over = {
-                subject: 'round_over',
-                game_number: this.game_number,
-                round_number: this.round_number,
-                state: this.players.map(player => [player.ID(), player.diceLeft]),
-                round_loser: loser.ID(),
-                round_challenger: challenger?.ID() ?? 0,
-                game_winner: this.turn.length == 1 ? this.players[this.turn[0]].ID() : 0,
-            };
             for (const player of this.players) {
+                const id = player.ID();
+                const msg: round_over = {
+                    subject: 'round_over',
+                    game_number: this.game_number,
+                    round_number: this.round_number,
+                    state: this.players.map(p => [p.ID() === id ? 0 : p.ID(), p.diceLeft]),
+                    round_loser: loser.ID() === id ? 0 : loser.ID(),
+                    round_challenger: (challenger?.ID() ?? -1) === id ? 0 : (challenger?.ID() ?? -1),
+                    game_winner: this.turn.length == 1 ? this.players[this.turn[0]].ID() : -1,
+                };
                 player.notify(msg);
             }
 

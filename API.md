@@ -11,13 +11,12 @@ First of all, let's define some ancillary types to make the API more readable:
 
 ```ts
 type IdType = string;
-type Integer = number;
-type Ordinal = Integer; // starting from 1
-type PlayerID = Integer;
-type EmptyPlayer = 0;
+type Ordinal = number;
+type PlayerID = Ordinal;
 type Yourself = 0;
+type EmptyPlayer = -1;
 type Face = 1 | 2 | 3 | 4 | 5 | 6;
-type Count = Integer;
+type Count = Ordinal;
 type Bid = [Face, Count];
 type EmptyBid = [0, 0];
 ```
@@ -46,7 +45,7 @@ interface round_over {
     subject: "round_over";
     game_number: Ordinal;
     round_number: Ordinal;
-    state: [PlayerID, Count][];
+    state: [PlayerID | Yourself, Count][];
     round_loser: PlayerID;
     round_challenger: PlayerID | EmptyPlayer; // empty means round is lost due to an invalid move
     game_winner: PlayerID | EmptyPlayer; // empty means game is not over yet
@@ -76,7 +75,7 @@ interface set_name {
 
 The API should be pretty clear from the information above, or at least straightforward enough to be able to deduce other details. However, if you still have some confusion, here are some key takeaways to keep in mind:
 
-- Field `other_hands` is an array of pairs of numbers where first one contains the ID of a player and second how many dice that player has left. It is sorted by the playing order. Field `state` is very similar except it contains your ID instead of `Yourself`, contains all players (even the ones with 0 dice left), and is not necessarily sorted in any way.
+- Field `other_hands` is an array of pairs of numbers where first one contains the ID of a player and second how many dice that player has left. It is sorted by the playing order. Field `state` is very similar, except it contains all players (even the ones with 0 dice left), and is not necessarily sorted in any way.
 - Here's how can you derive other information from the data given in `move_request` message:
     - It's first move in the round if: `last_bid == EmptyBid`.
     - Previous bid was made by the player whose ID is in the last element of `other_hands` array (obviously if it's not the first move).
