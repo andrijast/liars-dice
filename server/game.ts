@@ -77,11 +77,13 @@ export default class Game {
         this.turn = [...Array(this.players.length).keys()];
 
         const perm = generateRandomPermutation(clients.length);
-        
+
         for (const i in clients) {
             const player = new Player(clients[i], perm[i], number_of_dice);
             this.players[perm[i]] = player;
         }
+
+        // Deno.writeTextFileSync(`${Deno.cwd()}/log.txt`, '');
         
     }
 
@@ -113,7 +115,7 @@ export default class Game {
 
             const [ loser_index, challenger_index ] = await this.playRound();
             const loser = this.players[loser_index];
-            const challenger = this.players[challenger_index];
+            const challenger = challenger_index === -1 ? undefined : this.players[challenger_index];
 
             this.rotateTurn(loser_index);
             loser.diceLeft -= 1;
@@ -127,7 +129,7 @@ export default class Game {
                 round_number: this.round_number,
                 state: this.players.map(player => [player.ID(), player.diceLeft]),
                 round_loser: loser.ID(),
-                round_challenger: challenger.ID(),
+                round_challenger: challenger?.ID() ?? 0,
                 game_winner: this.turn.length == 1 ? this.players[this.turn[0]].ID() : 0,
             };
             for (const player of this.players) {
@@ -156,8 +158,8 @@ export default class Game {
             this.move_number++;
             
             const msgs: outbound[] = [];
-            for (const i of this.turn) {
-                const player = this.players[this.turn[i]];
+            for (const ti of this.turn) {
+                const player = this.players[ti];
                 const msg: move_request = {
                     subject: 'move_request',
                     game_number: this.game_number,
@@ -175,12 +177,14 @@ export default class Game {
             const replies = await Promise.allSettled(
                 this.turn.map((ti, i) => this.players[ti].ask(msgs[i]))
             );
+
             // console.log(replies);
+            // await Deno.writeTextFile('./log.txt', JSON.stringify(replies) + '\n', {append: true});
 
             // check for invalid moves and timeouts
-            for (const [ti, i] of this.turn.entries()) {
+            for (const [i, ti] of this.turn.entries()) {
                 if (replies[i].status === 'rejected') {
-                    return [ti, 0];
+                    return [ti, -1];
                 }
             }
 
@@ -190,7 +194,7 @@ export default class Game {
             // console.log(replyMessages);
 
             // check for the challenger
-            for (const [ti, i] of this.turn.entries()) {
+            for (const [i, ti] of this.turn.entries()) {
                 if (replyMessages[i].move === 'challenge') {
                     if (this.checkValidity(bid)) {
                         return [ti, ti];
@@ -202,8 +206,8 @@ export default class Game {
 
             // otherwise: continue
             const nextBid = replyMessages[0].move;
-            if (!(nextBid !== 'challenge' && nextBid !== 'pass' && !bid.increase(...nextBid))) {
-                return [this.turn[0], 0];
+            if (!(nextBid !== 'challenge' && nextBid !== 'pass' && bid.increase(...nextBid))) {
+                return [this.turn[0], -1];
             }
             this.rotateTurn(null);
 

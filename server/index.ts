@@ -21,12 +21,13 @@ export class Client {
     public name?: string;
     public victories: number;
 
-    private map: Map<string, (value: inbound | PromiseLike<inbound>) => void> = new Map();
+    private map: Map<string, (value: inbound | PromiseLike<inbound>) => void>;
 
     constructor (socket: net.Socket, index: number) {
         this.socket = socket;
         this.ID = index;
         this.victories = 0;
+        this.map = new Map();
     }
 
     public setName(name: string) {
@@ -45,16 +46,16 @@ export class Client {
     public ask(msg: outbound): Promise<inbound> {
 
         const id = Math.random().toString(36).substring(2);
-        const wrapped_msg: outbound & header = {
+        const wrapped_msg: header & outbound = {
             message_id: id,
             ...msg,
         }
 
-        this.send(JSON.stringify(wrapped_msg));
-
         const ret: Promise<inbound> = new Promise((resolve, reject) => {
 
             this.map.set(id, resolve);
+
+            this.send(JSON.stringify(wrapped_msg));
 
             setTimeout(() => reject('timeout'), 3000);
 
@@ -63,14 +64,15 @@ export class Client {
         return ret;
     }
 
-    public answer(wrapped_msg: inbound & header) {
+    public answer(wrapped_msg: header & inbound) {
+
+        // console.log(wrapped_msg);
+        if (!wrapped_msg.message_id || !wrapped_msg.move) return;
 
         const id = wrapped_msg.message_id;
-
         const msg: inbound = {move: wrapped_msg.move};
 
         const resolve = this.map.get(id);
-
         if (resolve) resolve(msg);
 
         this.map.delete(id);
@@ -108,7 +110,8 @@ const handler = (conn: net.Socket) => {
 
         // console.log('-->', data, '\n');
 
-        const msg: set_name | inbound & header = JSON.parse(data);
+        const msg: set_name | header & inbound = JSON.parse(data);
+        // console.log(conn.remotePort, msg);
         if (!msg) return;
 
         if ('name' in msg) {
@@ -149,7 +152,7 @@ async function playThemGames() {
 
     console.log(green('The match begins, good luck!'));
 
-    for (let i = 0; i < number_of_games; i++) {
+    for (let i = 1; i <= number_of_games; i++) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         const game = new Game(i, clients, number_of_dice);
         console.log(yellow('Game ' + i + ' begins!'));
