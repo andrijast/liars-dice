@@ -2,9 +2,11 @@ import net from 'node:net';
 // import * as net from "https://deno.land/std@0.110.0/node/net.ts";
 import { red, blue, yellow, green } from 'https://deno.land/std@0.198.0/fmt/colors.ts';
 
-import { inbound, inbound_packet, outbound, outbound_packet } from './types.ts';
+import { move_request, round_over, move_response, set_name, header } from './types.ts';
 import Game from './game.ts';
 
+type outbound = move_request;
+type inbound = move_response;
 
 const number_of_players = + (Deno.args[0] ?? 2);
 const number_of_dice = + (Deno.args[1] ?? 6);
@@ -28,23 +30,24 @@ export class Client {
     }
 
     public setName(name: string) {
-        this.name = name;
-    }
-
-    public won() {
-        this.victories++;
+        if (!this.name)
+            this.name = name;
     }
 
     private send(msg: string) {
         return this.socket.write(msg);
     }
 
+    public notify(msg: round_over) {
+        return this.send(JSON.stringify(msg));
+    }
+
     public ask(msg: outbound): Promise<inbound> {
 
         const id = Math.random().toString(36).substring(2);
-        const wrapped_msg: outbound_packet = {
-            ...msg,
+        const wrapped_msg: outbound & header = {
             message_id: id,
+            ...msg,
         }
 
         this.send(JSON.stringify(wrapped_msg));
@@ -60,17 +63,17 @@ export class Client {
         return ret;
     }
 
-    public answer(msg_string: string) {
+    public answer(wrapped_msg: inbound & header) {
 
-        const msg_packet: inbound_packet = JSON.parse(msg_string);
-        // TODO: type guard
-        const id = msg_packet.message_id;
-        // TODO: type narrowing
-        const msg_plain: inbound = msg_packet;
+        const id = wrapped_msg.message_id;
+
+        const msg: inbound = {move: wrapped_msg.move};
 
         const resolve = this.map.get(id);
 
-        if (resolve) resolve(msg_plain);
+        if (resolve) resolve(msg);
+
+        this.map.delete(id);
 
     }
 
@@ -92,7 +95,7 @@ const handler = (conn: net.Socket) => {
 
     const client = new Client(conn, clients.length);
     clients.push(client);
-    console.log(blue(`Lobby: ${clients.length}/${number_of_players}`));
+    console.log(blue(`Lobby: ${clients.length}/${number_of_players}.`));
 
     if (clients.length === number_of_players) {
         playThemGames().then(() => {
@@ -105,12 +108,27 @@ const handler = (conn: net.Socket) => {
 
         // console.log('-->', data, '\n');
 
-        client.answer(data);
+        const msg: set_name | inbound & header = JSON.parse(data);
+        if (!msg) return;
+
+        if ('name' in msg) {
+            if (typeof msg.name === 'string')
+                client.setName(msg.name);
+        }
+
+        if ('message_id' in msg && 'move' in msg) {
+            if (typeof msg.message_id === 'string' && (typeof msg.move === 'string' || 
+                Array.isArray(msg.move) && msg.move.length === 2 && typeof msg.move[0] === 'number' && typeof msg.move[1] === 'number'
+            ))
+                client.answer(msg);
+        }
+
+        // TODO: improve type guarding?
 
     });
 
     conn.on('end', () => {
-        console.log(red(`Player disconnected: ${conn.remoteAddress}:${conn.remotePort}`));
+        console.log(red(`Player disconnected: ${conn.remoteAddress}:${conn.remotePort}.`));
         // TODO: handle peacefully
         server.close();
         Deno.exit();
@@ -123,16 +141,22 @@ const server = net.createServer(handler);
 
 server.listen(port_number);
 
+const info: net.AddressInfo = server.address() as net.AddressInfo;
+console.log(`Server is listening for bots on ${info.address}:${info.port}`);
+
 
 async function playThemGames() {
 
     console.log(green('The match begins, good luck!'));
 
     for (let i = 0; i < number_of_games; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         const game = new Game(i, clients, number_of_dice);
         console.log(yellow('Game ' + i + ' begins!'));
-        const winner: Client = await game.play();
-        winner.won();
+        console.log(yellow(JSON.stringify(clients.map(client => client.name))));
+        const winner_id: number = await game.play();
+        const winner = clients[winner_id-1];
+        winner.victories += 1;
         console.log(yellow('Game ' + i + ' ended, winner: ' + winner.name));
     }
 

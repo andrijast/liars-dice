@@ -18,13 +18,7 @@ git clone git@github.com:andrijast/liars-dice
 cd liars-dice
 ```
 
-Now use this command to start the server
-
-```bash
-deno run --allow-net ./server/index.ts [number_of_players=2] [number_of_dice=6] [number_of_games=1] [port=5533]
-```
-
-Or just use `run.sh` script
+Now use this command with following arguments (default values given) to start the server with deno:
 
 ```bash
 ./run.sh [number_of_players=2] [number_of_dice=6] [number_of_games=1] [port=5533]
@@ -35,11 +29,11 @@ Or just use `run.sh` script
 After running the server, to run a quick test simulation with bare simple bots, run:
 
 ```bash
-node bots & node bots
+bots/run.sh
 ```
 
 ## ToDo
 
 - [x] Add time limit to replies
-- [ ] Allow players to provide names
+- [x] Allow players to provide names
 - [ ] Handle player disconnet peacefully

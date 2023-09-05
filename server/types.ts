@@ -1,6 +1,6 @@
 
 export type Integer = number;
-export type Ordinal = Integer; // starting from 1
+export type Ordinal = Integer;
 export type Count = Integer;
 
 export type PlayerID = Integer;
@@ -20,33 +20,36 @@ export type EmptyBid = [0, 0];
 export type Hand = Face[];
 
 
-// server -> bot
+// --- MESSAGES ---
 
-export interface outbound {
+export interface move_request {
+    subject: "move_request";
     game_number: Ordinal;
     round_number: Ordinal;
     move_number: Ordinal;
     your_hand: Face[];
-    other_hands: [PlayerID | Yourself, Count][]; // sorted by playing order
-    last_move: "first_move" | "bid_made" | "challenge_made" | "invalid_move";
+    other_hands: [PlayerID | Yourself, Count][];
     last_bid: Bid | EmptyBid;
-    last_bidder: PlayerID | EmptyPlayer;
-    last_loser: PlayerID | EmptyPlayer;
-    last_challenger: PlayerID | EmptyPlayer;
 }
 
-export interface outbound_packet extends outbound {
-    message_id: IdType;
+export interface round_over {
+    subject: "round_over";
+    game_number: Ordinal;
+    round_number: Ordinal;
+    state: [PlayerID, Count][];
+    round_loser: PlayerID;
+    round_challenger: PlayerID | EmptyPlayer;
+    game_winner: PlayerID | EmptyPlayer;
 }
 
-
-// bot -> server
-
-export interface inbound {
+export interface move_response {
     move: "pass" | "challenge" | Bid;
 }
 
-export interface inbound_packet extends inbound {
-    message_id: IdType;
+export interface set_name {
+    name: string;
 }
 
+export interface header {
+    message_id: IdType;
+}

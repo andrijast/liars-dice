@@ -1,23 +1,39 @@
 const net = require('net')
 // import net from 'node:net';
+const fs = require('fs');
+
+const debug = process.argv.length === 3;
+const path = __dirname + '/log.txt';
+if (debug) {
+    fs.truncateSync(path, 0, () => {});
+}
 
 const client = net.createConnection({port: 5533})
 
 client.on('connect', () => {
-    
+    client.write(JSON.stringify({
+        name: `Igrac${Math.ceil(Math.random()*10)}`
+    }));
 });
 
 client.on('data', data => {
 
-    console.log('--> begin');
-    console.log(data.toString());
-    console.log('--> end');
+    // console.log('--> begin');
+    // console.log(data.toString());
+    // console.log('--> end');
 
     const msg = JSON.parse(data.toString());
+    if (debug) {
+        fs.appendFile(path, '-->' + JSON.stringify(msg) + '\n', () => {});
+    }
 
-    const ret = answer(msg);
-
-    client.write(JSON.stringify(ret));
+    if (msg.subject === 'move_request') {
+        const ret = answer(msg);
+        if (debug) {
+            fs.appendFile(path, '<--' + JSON.stringify(ret) + '\n', () => {});
+        }
+        client.write(JSON.stringify(ret));
+    }
 
 });
 
@@ -29,7 +45,7 @@ function answer(msg) {
         move: 'pass',
     };
 
-    if (Math.random() < 0.2) {
+    if (msg.last_bid[0] > 0 && Math.random() < 0.2) {
         ret.move = 'challenge';
         return ret;
     }
@@ -45,7 +61,7 @@ function answer(msg) {
 
 }
 
-function sleep(ms) {
+function _sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
