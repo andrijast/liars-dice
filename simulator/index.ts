@@ -134,10 +134,10 @@ async function handle(conn: Deno.Conn) {
 
 async function playThemGames() {
 
-    console.log(green('The match begins, good luck!'));
+    console.log(green('Get ready, the match will start soon!'));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     for (let i = 1; i <= number_of_games; i++) {
-        // await new Promise((resolve) => setTimeout(resolve, 200));
         const game = new Game(i, clients, number_of_dice);
         console.log(yellow('Game ' + i + ' begins!'));
         console.log(yellow(JSON.stringify(clients.map(client => client.name))));
