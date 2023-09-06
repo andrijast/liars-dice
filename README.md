@@ -21,7 +21,7 @@ cd liars-dice
 Now use this command with following arguments (default values given) to start the server with deno:
 
 ```bash
-./run.sh [number_of_players=2] [number_of_dice=6] [number_of_games=1] [port=5533]
+server/run.sh [number_of_players=2] [number_of_dice=6] [number_of_games=1] [port=5533]
 ```
 
 ### Quick start a simulation
@@ -36,4 +36,4 @@ bots/run.sh
 
 - [x] Add time limit to replies
 - [x] Allow players to provide names
-- [ ] Handle player disconnet peacefully
+- [x] Handle player disconnet peacefully

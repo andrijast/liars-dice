@@ -1,7 +1,7 @@
 
 import { Face, Hand, Bid, EmptyBid } from './types.ts';
 import { move_request, round_over, move_response } from './types.ts';
-import { Client } from './index.ts';
+import { Client, logging } from './index.ts';
 
 type outbound = move_request;
 type inbound = move_response;
@@ -67,6 +67,8 @@ export default class Game {
     private players: Player[];
     private turn: number[];
 
+    private logpath: string;
+
     constructor(game_number: number, clients: Client[], number_of_dice: number) {
 
         this.game_number = game_number;
@@ -76,14 +78,23 @@ export default class Game {
         this.players = new Array<Player>(clients.length);
         this.turn = [...Array(this.players.length).keys()];
 
-        const perm = generateRandomPermutation(clients.length);
+        const perm = ((n: number): number[] => { // by ChatGipity
+            const permutation = Array.from({ length: n }, (_, index) => index);
+            for (let i = n - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [permutation[i], permutation[j]] = [permutation[j], permutation[i]];
+            }
+            return permutation;
+        })(clients.length);
 
         for (const i in clients) {
             const player = new Player(clients[i], perm[i], number_of_dice);
             this.players[perm[i]] = player;
         }
 
-        // Deno.writeTextFileSync(`${Deno.cwd()}/log.txt`, '');
+        this.logpath = `./logs/game${game_number}.log`;
+        if (logging)
+            Deno.writeTextFileSync(this.logpath, '');
         
     }
 
@@ -98,7 +109,7 @@ export default class Game {
     }
 
     private rotateTurn(ind: null | number) {
-        if (!ind) {
+        if (ind === null) {
             this.turn.push(this.turn.shift() ?? 0); // TODO: 0 should not happpen
         }
         else while (this.turn[0] !== ind) {
@@ -179,8 +190,10 @@ export default class Game {
                 this.turn.map((ti, i) => this.players[ti].ask(msgs[i]))
             );
 
-            // console.log(replies);
-            // await Deno.writeTextFile('./log.txt', JSON.stringify(replies) + '\n', {append: true});
+            if (logging)
+                await Deno.writeTextFile(this.logpath, `${this.round_number}.${this.move_number} -> ${JSON.stringify(
+                    this.turn.map((ti, i) => {return {name: this.players[ti].name(), ...replies[i]}})
+                )}\n`, {append: true});
 
             // check for invalid moves and timeouts
             for (const [i, ti] of this.turn.entries()) {
@@ -218,18 +231,3 @@ export default class Game {
 
 }
 
-
-// ----- UTILS -----
-
-function generateRandomPermutation(n: number): number[] { // by ChatGipity
-    const permutation = Array.from({ length: n }, (_, index) => index);
-    for (let i = n - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [permutation[i], permutation[j]] = [permutation[j], permutation[i]];
-    }
-    return permutation;
-}
-
-function _sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
