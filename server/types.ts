@@ -1,15 +1,13 @@
 
-export type Integer = number;
-export type Ordinal = Integer;
-export type Count = Integer;
-
-export type PlayerID = Integer;
-export type EmptyPlayer = 0;
-export type Yourself = 0;
-
 export type IdType = string;
 
-export type MoveID = Integer;
+export type Ordinal = number;
+export type Count = Ordinal;
+
+export type PlayerID = Ordinal;
+export type Yourself = 0;
+export type EmptyPlayer = -1;
+
 
 export type Face = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -36,7 +34,7 @@ export interface round_over {
     subject: "round_over";
     game_number: Ordinal;
     round_number: Ordinal;
-    state: [PlayerID, Count][];
+    state: [PlayerID | Yourself, Count][];
     round_loser: PlayerID;
     round_challenger: PlayerID | EmptyPlayer;
     game_winner: PlayerID | EmptyPlayer;
