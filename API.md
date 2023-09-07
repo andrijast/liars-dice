@@ -1,11 +1,9 @@
 
-Communication between server and an AI bot is done via **TCP/IP sockets** with messages in **JSON** format. Therefore, write your bot in any language where you feel the most comfortable with these two.
-
-Message passing is done in a request-response manner, meaning, after server sends a message, bot should reply *synchronously* with the same `message_id` field. This is the *only* means of communication.
+Communication between the simulator (server) and a bot (client) is done via **TCP/IP sockets** with messages in **JSON** format. Message passing is conducted in a *request-response* manner, meaning, after server sends a message, bot should reply *synchronously* with the identical `message_id` field. Every message sent through TCP socket should be a *stringified* JSON with a **trailing newline** character (`'\n'`) at the end (serving as a delimiter of some sorts). That's true for both client and server.
 
 ## Message formats
 
-Following are JSON message formats given in TypeScript notation.
+Following specification is given in TypeScript notation.
 
 First of all, let's define some ancillary types to make the API more readable:
 

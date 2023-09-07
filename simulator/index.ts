@@ -3,8 +3,9 @@ import { blue, yellow, green } from 'https://deno.land/std@0.198.0/fmt/colors.ts
 import { move_request, round_over, move_response, set_name, header } from './types.ts';
 import Game from './game.ts';
 
-type outbound = move_request;
-type inbound = move_response;
+type request = move_request;
+type response = move_response;
+type inbound = set_name | header & response;
 
 const number_of_players = + (Deno.args[0] ?? 2);
 const number_of_dice = + (Deno.args[1] ?? 6);
@@ -21,7 +22,7 @@ export class Client {
     public name?: string;
     public victories: number;
 
-    private map: Map<string, (value: inbound | PromiseLike<inbound>) => void>;
+    private map: Map<string, (value: response | PromiseLike<response>) => void>;
 
     constructor (socket: Deno.Conn, index: number) {
         this.socket = socket;
@@ -37,7 +38,7 @@ export class Client {
 
     private async send(msg: string) {
         try {
-            return await this.socket.write(new TextEncoder().encode(msg));
+            return await this.socket.write(new TextEncoder().encode(msg + '\n'));
         } catch (_) {
             this.disconnected = true;
             return 0;
@@ -49,18 +50,18 @@ export class Client {
             this.send(JSON.stringify(msg));
     }
 
-    public ask(msg: outbound): Promise<inbound> {
+    public ask(msg: request): Promise<response> {
 
         if (this.disconnected)
             return new Promise((_, reject) => reject('disconnected'));
 
         const id = Math.random().toString(36).substring(2);
-        const wrapped_msg: header & outbound = {
+        const wrapped_msg: header & request = {
             message_id: id,
             ...msg,
         }
 
-        const ret: Promise<inbound> = new Promise((resolve, reject) => {
+        const ret: Promise<response> = new Promise((resolve, reject) => {
 
             this.map.set(id, resolve);
 
@@ -73,13 +74,13 @@ export class Client {
         return ret;
     }
 
-    public answer(wrapped_msg: header & inbound) {
+    public answer(wrapped_msg: header & response) {
 
         if (!wrapped_msg.message_id || !wrapped_msg.move)
             return;
 
         const id = wrapped_msg.message_id;
-        const msg: inbound = {move: wrapped_msg.move};
+        const msg: response = {move: wrapped_msg.move};
 
         const resolve = this.map.get(id);
         if (resolve) resolve(msg);
@@ -101,18 +102,30 @@ async function handle(conn: Deno.Conn) {
 
     while (true) {
 
-        const buffer: Uint8Array = new Uint8Array(200);
-        const len = await conn.read(buffer);
-        if (len === null) {
+        let msgs: inbound[];
+
+        try {
+            const buffer: Uint8Array = new Uint8Array(200);
+            const len = await conn.read(buffer);
+            if (len === null) throw 'null';
+            const data: string = new TextDecoder().decode(buffer).slice(0, len);
+
+            if (logging)
+                Deno.writeTextFileSync('./logs/incoming.log', `${info.port}: ${data}\n`, {append: true});
+
+            msgs = data.split('\n').slice(0, -1).map(msg => JSON.parse(msg));
+            
+        } catch(_) {
             client.disconnected = true;
             break;
         }
-        const data: string = new TextDecoder().decode(buffer).slice(0, len);
-        
-        if (logging)
-            Deno.writeTextFileSync('./logs/incoming.log', `${info.port}: ${data}\n`, {append: true});
 
-        const msg: set_name | header & inbound = JSON.parse(data);
+        msgs.forEach(msg => process(msg));
+
+    }
+
+    function process(msg: inbound) {
+
         if (!msg) return;
 
         // TODO: improve type guarding?

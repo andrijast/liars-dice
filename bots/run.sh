@@ -1,1 +1,1 @@
-node bots & node bots
+node bots/basic.js & node bots/basic.js

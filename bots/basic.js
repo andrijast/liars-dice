@@ -13,16 +13,21 @@ const client = net.createConnection({port: 5533})
 client.on('connect', () => {
     client.write(JSON.stringify({
         name: `Igrac${Math.ceil(Math.random()*10)}`
-    }));
+    }) + '\n');
 });
 
 client.on('data', data => {
 
-    // console.log('--> begin');
     // console.log(data.toString());
-    // console.log('--> end');
 
-    const msg = JSON.parse(data.toString());
+    const msgs = data.toString().split('\n').slice(0, -1);
+    
+    msgs.forEach(msg => process2(JSON.parse(msg)));
+
+});
+
+function process2(msg) {
+
     if (debug) {
         fs.appendFile(path, '-->' + JSON.stringify(msg) + '\n', () => {});
     }
@@ -32,11 +37,9 @@ client.on('data', data => {
         if (debug) {
             fs.appendFile(path, '<--' + JSON.stringify(ret) + '\n', () => {});
         }
-        client.write(JSON.stringify(ret));
+        client.write(JSON.stringify(ret) + '\n');
     }
-
-});
-
+}
 
 function answer(msg) {
     
